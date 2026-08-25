@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NFL Imposter</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#0b1020; --panel:#131a2e; --panel2:#1b2440; --text:#f7f8fc;
+      --muted:#aeb8d3; --accent:#6ea8fe; --good:#55d187; --bad:#ff6b6b; --line:#2b3659;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:
+      radial-gradient(circle at top,#1a2750 0,#0b1020 46%);color:var(--text);min-height:100vh}
+    main{max-width:780px;margin:auto;padding:28px 18px 48px}
+    .hero{text-align:center;margin:12px 0 26px}
+    h1{font-size:clamp(2rem,7vw,4rem);margin:.2rem 0;font-weight:900;letter-spacing:-.04em}
+    .sub{color:var(--muted);font-size:1.04rem;line-height:1.55}
+    .card{background:rgba(19,26,46,.94);border:1px solid var(--line);border-radius:20px;padding:22px;margin:16px 0;
+      box-shadow:0 18px 50px rgba(0,0,0,.25)}
+    button{appearance:none;border:0;border-radius:14px;padding:14px 18px;font-weight:800;font-size:1rem;cursor:pointer;
+      background:var(--accent);color:#071020;min-height:48px}
+    button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+    button:hover{filter:brightness(1.06)}
+    .links{display:grid;gap:12px;margin-top:18px}
+    .slot{border:1px solid var(--line);border-radius:16px;padding:14px;background:#0f1629}
+    .slot strong{display:block;margin-bottom:8px}
+    .row{display:flex;gap:10px;align-items:center}
+    .secret{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);
+      font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.84rem}
+    .copy{padding:10px 13px;min-height:42px;white-space:nowrap}
+    .role{text-align:center;padding:30px 10px}
+    .role .emoji{font-size:4rem}
+    .role h2{font-size:2.2rem;margin:10px 0}
+    .player{font-size:clamp(2rem,9vw,4.3rem);font-weight:950;letter-spacing:-.04em;margin:18px 0}
+    .imposter{color:var(--bad)}
+    .normal{color:var(--good)}
+    .hide{display:none}
+    .note{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .status{height:1.3em;color:var(--good);font-size:.9rem;margin-top:7px}
+    @media(max-width:520px){.row{align-items:stretch;flex-direction:column}.secret{white-space:normal;word-break:break-all}.copy{width:100%}}
+  </style>
+</head>
+<body>
+<main>
+  <section id="hostView">
+    <div class="hero">
+      <div style="font-size:3rem">🏈</div>
+      <h1>NFL Imposter</h1>
+      <p class="sub">One imposter. Three matching NFL players. Four private role links.</p>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Start a game</h2>
+      <p class="sub">Press the button below. The page will randomly choose one NFL player and randomly assign exactly one of the four links as the imposter.</p>
+      <button id="createBtn">Generate 4 Secret Links</button>
+      <div id="linksWrap" class="hide">
+        <div class="links" id="links"></div>
+        <p class="note">Send exactly one link to each person, including yourself. Do not open someone else's link.</p>
+        <button id="newBtn" class="secondary">Generate a New Game</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="roleView" class="hide">
+    <div class="hero">
+      <div style="font-size:3rem">🏈</div>
+      <h1>Your Role</h1>
+      <p class="sub">Keep this screen private.</p>
+    </div>
+    <div class="card role">
+      <div id="roleEmoji" class="emoji"></div>
+      <h2 id="roleTitle"></h2>
+      <div id="playerName" class="player"></div>
+      <p id="roleText" class="sub"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const players = [
+    "Patrick Mahomes","Josh Allen","Lamar Jackson","Joe Burrow","Jalen Hurts","Justin Herbert",
+    "C.J. Stroud","Jordan Love","Baker Mayfield","Dak Prescott","Jared Goff","Trevor Lawrence",
+    "Tua Tagovailoa","Kyler Murray","Matthew Stafford","Brock Purdy","Caleb Williams","Jayden Daniels",
+    "Justin Jefferson","Ja'Marr Chase","CeeDee Lamb","Amon-Ra St. Brown","A.J. Brown","Tyreek Hill",
+    "Puka Nacua","Garrett Wilson","Mike Evans","DK Metcalf","Terry McLaurin","DeVonta Smith",
+    "George Pickens","Chris Olave","Drake London","Nico Collins","Tee Higgins","Jaylen Waddle",
+    "Travis Kelce","George Kittle","Mark Andrews","Sam LaPorta","Trey McBride","T.J. Hockenson",
+    "Bijan Robinson","Saquon Barkley","Christian McCaffrey","Jahmyr Gibbs","Jonathan Taylor",
+    "Josh Jacobs","Breece Hall","Derrick Henry","De'Von Achane","Kyren Williams","James Cook",
+    "Micah Parsons","T.J. Watt","Myles Garrett","Maxx Crosby","Nick Bosa","Aidan Hutchinson",
+    "Roquan Smith","Fred Warner","Sauce Gardner","Patrick Surtain II","Kyle Hamilton","Antoine Winfield Jr.",
+    "Chris Jones","Quinnen Williams","Dexter Lawrence","Brian Burns","Danielle Hunter","Montez Sweat"
+  ];
+
+  const hostView = document.getElementById('hostView');
+  const roleView = document.getElementById('roleView');
+  const createBtn = document.getElementById('createBtn');
+  const newBtn = document.getElementById('newBtn');
+  const linksWrap = document.getElementById('linksWrap');
+  const links = document.getElementById('links');
+
+  function encode(obj){
+    const bytes = new TextEncoder().encode(JSON.stringify(obj));
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function decode(s){
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length % 4) s += '=';
+    const binary = atob(s);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  function baseUrl(){
+    return location.href.split('?')[0].split('#')[0];
+  }
+
+  function generate(){
+    const player = players[Math.floor(Math.random()*players.length)];
+    const imposter = Math.floor(Math.random()*4);
+    links.innerHTML = '';
+    for(let i=0;i<4;i++){
+      const payload = i === imposter
+        ? {v:1, role:"imposter"}
+        : {v:1, role:"player", player};
+      const url = `${baseUrl()}?r=${encode(payload)}`;
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      const label = document.createElement('strong');
+      label.textContent = `Person ${i+1}`;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const txt = document.createElement('div');
+      txt.className = 'secret';
+      txt.textContent = url;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy';
+      btn.textContent = 'Copy Link';
+      const status = document.createElement('div');
+      status.className = 'status';
+      btn.addEventListener('click', async () => {
+        try{
+          await navigator.clipboard.writeText(url);
+          status.textContent = 'Copied!';
+        } catch(e) {
+          status.textContent = 'Select and copy the link manually.';
+        }
+        setTimeout(()=>status.textContent='',1800);
+      });
+      row.append(txt,btn);
+      slot.append(label,row,status);
+      links.append(slot);
+    }
+    linksWrap.classList.remove('hide');
+    createBtn.classList.add('hide');
+  }
+
+  function showRole(payload){
+    hostView.classList.add('hide');
+    roleView.classList.remove('hide');
+    const emoji = document.getElementById('roleEmoji');
+    const title = document.getElementById('roleTitle');
+    const playerName = document.getElementById('playerName');
+    const text = document.getElementById('roleText');
+    if(payload.role === 'imposter'){
+      emoji.textContent = '🕵️';
+      title.textContent = 'YOU ARE THE IMPOSTER';
+      title.className = 'imposter';
+      playerName.textContent = 'IMPOSTER';
+      playerName.className = 'player imposter';
+      text.textContent = 'You do not get the NFL player. Blend in and try to figure out who everyone else has.';
+    } else {
+      emoji.textContent = '🏈';
+      title.textContent = 'YOUR NFL PLAYER';
+      title.className = 'normal';
+      playerName.textContent = payload.player || 'Unknown Player';
+      playerName.className = 'player normal';
+      text.textContent = 'The other two non-imposters have this exact same player. Keep it secret.';
+    }
+  }
+
+  const params = new URLSearchParams(location.search);
+  const roleToken = params.get('r');
+  if(roleToken){
+    try{ showRole(decode(roleToken)); }
+    catch(e){
+      alert('This role link is invalid.');
+      history.replaceState(null,'',baseUrl());
+    }
+  }
+
+  createBtn.addEventListener('click', generate);
+  newBtn.addEventListener('click', () => {
+    createBtn.classList.remove('hide');
+    linksWrap.classList.add('hide');
+    generate();
+  });
+})();
+</script>
+</body>
+</html>
