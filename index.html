@@ -135,13 +135,10 @@
       label.textContent = `Person ${i+1}`;
       const row = document.createElement('div');
       row.className = 'row';
-      const txt = document.createElement('div');
-      txt.className = 'secret';
-      txt.textContent = url;
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy';
-      btn.textContent = 'Copy Link';
+      btn.textContent = 'Copy Secret Link';
       const status = document.createElement('div');
       status.className = 'status';
       btn.addEventListener('click', async () => {
@@ -153,7 +150,7 @@
         }
         setTimeout(()=>status.textContent='',1800);
       });
-      row.append(txt,btn);
+      row.append(btn);
       slot.append(label,row,status);
       links.append(slot);
     }
