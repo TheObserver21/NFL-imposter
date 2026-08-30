@@ -48,13 +48,13 @@
     <div class="hero">
       <div style="font-size:3rem">🏈</div>
       <h1>NFL Imposter</h1>
-      <p class="sub">One imposter. Three matching NFL players. Four private role links.</p>
+      <p class="sub">One imposter. Four matching NFL players. Five private role links.</p>
     </div>
 
     <div class="card">
       <h2 style="margin-top:0">Start a game</h2>
-      <p class="sub">Press the button below. The page will randomly choose one NFL player and randomly assign exactly one of the four links as the imposter.</p>
-      <button id="createBtn">Generate 4 Secret Links</button>
+      <p class="sub">Press the button below. The page will randomly choose one NFL player and randomly assign exactly one of the five links as the imposter.</p>
+      <button id="createBtn">Generate 5 Secret Links</button>
       <div id="linksWrap" class="hide">
         <div class="links" id="links"></div>
         <p class="note">Send exactly one link to each person, including yourself. Do not open someone else's link.</p>
@@ -122,9 +122,9 @@
 
   function generate(){
     const player = players[Math.floor(Math.random()*players.length)];
-    const imposter = Math.floor(Math.random()*4);
+    const imposter = Math.floor(Math.random()*5);
     links.innerHTML = '';
-    for(let i=0;i<4;i++){
+    for(let i=0;i<5;i++){
       const payload = i === imposter
         ? {v:1, role:"imposter"}
         : {v:1, role:"player", player};
@@ -181,7 +181,7 @@
       title.className = 'normal';
       playerName.textContent = payload.player || 'Unknown Player';
       playerName.className = 'player normal';
-      text.textContent = 'The other two non-imposters have this exact same player. Keep it secret.';
+      text.textContent = 'The other three non-imposters have this exact same player. Keep it secret.';
     }
   }
 
